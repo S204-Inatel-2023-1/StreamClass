@@ -1,0 +1,42 @@
+<html>
+
+  <head>
+
+  </head>
+
+
+
+  <body>
+
+    <form action="{% url 'cadastro' %}" method="POST">{% csrf_token %}
+      <input type="text" placeholder="Username..." name="username">
+      <br>
+      <br>
+      <input type="text" placeholder="Primeiro nome" name="fname">
+      <br>
+      <br>
+      <input type="text" placeholder="Sobrenome" name="lname">
+      <br>
+      <br>
+      <input type="email" placeholder="Email..." name="email">
+      <br>
+      <br>
+      <input type="password" placeholder="Senha..." name="senha">
+      <br>
+      <br>
+      <input type="password" placeholder="Confirme sua senha" name="senha_confirm">
+      <br>
+      <br>
+      <input type="date" placeholder="Data de Nascimento" name="data_nasc">
+      <br>
+      <br>
+      <input type="submit" value="Cadastrar">
+
+    </form>
+
+
+
+  </body>
+
+
+</html>
