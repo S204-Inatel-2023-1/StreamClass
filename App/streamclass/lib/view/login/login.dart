@@ -1,6 +1,9 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
+import 'package:streamclass/controller/userDB.dart';
 import 'package:streamclass/core/appSize.dart';
+import 'package:streamclass/view/home_page/home_page.dart';
 
 class Login_widget extends StatefulWidget {
   const Login_widget({Key? key}) : super(key: key);
@@ -13,6 +16,11 @@ class _Login_widgetState extends State<Login_widget> {
   TextEditingController _email = TextEditingController();
   TextEditingController _senha = TextEditingController();
   final styleText = TextStyle(fontSize: SizeText.textInput);
+  bool hide = true;
+  String? _senhaerror;
+  String? _emailerror;
+  Color _emailColor = Colors.white.withOpacity(.5);
+  Color _senhaColor = Colors.white.withOpacity(.5);
 
   InputBorder bordas = OutlineInputBorder(
     borderSide: BorderSide(
@@ -27,7 +35,7 @@ class _Login_widgetState extends State<Login_widget> {
   Widget build(BuildContext context) {
     return Material(
       child: Container(
-        padding: EdgeInsets.fromLTRB(20.sp, 40.sp, 20.sp, 40.sp),
+        padding: EdgeInsets.fromLTRB(20.sp, 30.sp, 20.sp, 40.sp),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
@@ -51,14 +59,17 @@ class _Login_widgetState extends State<Login_widget> {
             Text(
               "Stream Class",
               style: TextStyle(
-                fontSize: 50.sp,
+                fontSize: 45.sp,
                 color: Colors.white,
                 fontFamily: 'JockeyOne',
               ),
             ),
-            Image(
-              image: AssetImage(
-                "assets/logo.png",
+            SizedBox(
+              height: 60.sp,
+              child: Image(
+                image: AssetImage(
+                  "assets/logo.png",
+                ),
               ),
             ),
             SizedBox(
@@ -79,10 +90,13 @@ class _Login_widgetState extends State<Login_widget> {
                     style: TextStyle(color: Colors.white),
                     textInputAction: TextInputAction.next,
                     decoration: InputDecoration(
+                      focusedErrorBorder: bordas,
+                      errorBorder: bordas,
+                      errorText: _emailerror,
                       focusedBorder: bordas,
                       hintText: "Email",
                       hintStyle: TextStyle(
-                        color: Colors.white.withOpacity(.5),
+                        color: _emailColor,
                       ),
                       filled: true,
                       fillColor: Color.fromRGBO(66, 156, 216, 1),
@@ -91,18 +105,36 @@ class _Login_widgetState extends State<Login_widget> {
                   ),
                   TextFormField(
                     controller: _senha,
+                    obscureText: hide,
                     cursorColor: Colors.white,
                     style: TextStyle(color: Colors.white),
                     textInputAction: TextInputAction.next,
                     decoration: InputDecoration(
+                      focusedErrorBorder: bordas,
+                      errorBorder: bordas,
+                      errorText: _senhaerror,
                       focusedBorder: bordas,
                       hintText: "Senha",
                       hintStyle: TextStyle(
-                        color: Colors.white.withOpacity(.5),
+                        color: _senhaColor,
                       ),
                       filled: true,
                       fillColor: Color.fromRGBO(66, 156, 216, 1),
                       enabledBorder: bordas,
+                      suffixIcon: Padding(
+                        padding: EdgeInsets.only(right: 5.0.w),
+                        child: GestureDetector(
+                          onTap: () => setState(() {
+                            hide = !hide;
+                          }),
+                          child: Icon(
+                            hide
+                                ? CupertinoIcons.eye
+                                : CupertinoIcons.eye_slash,
+                            color: Colors.white.withOpacity(.5),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                   Align(
@@ -121,7 +153,27 @@ class _Login_widgetState extends State<Login_widget> {
               ),
             ),
             ElevatedButton(
-              onPressed: () {},
+              onPressed: () {
+                if (_email.text.isEmpty || _email.text == null) {
+                  setState(
+                    () {
+                      _emailerror = "Digite seu email";
+                      _emailColor = Colors.red;
+                    },
+                  );
+                }
+                if (_senha.text.isEmpty || _senha.text == null) {
+                  setState(
+                    () {
+                      _senhaerror = "Digite sua senha";
+                      _senhaColor = Colors.red;
+                    },
+                  );
+                }
+                if (_email.text.isNotEmpty && _senha.text.isNotEmpty) {
+                  _signin(_email.text, _senha.text);
+                }
+              },
               style: ButtonStyle(
                 backgroundColor: MaterialStateProperty.all(Colors.white),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
@@ -244,5 +296,53 @@ class _Login_widgetState extends State<Login_widget> {
         ),
       ),
     );
+  }
+
+  _signin(String email, String senha) async {
+    try {
+      if (await UserDB().verificaEmail(email)) {
+        if (await UserDB().verificaSenha(senha)) {
+          await UserDB().login(email, senha).then((value) {
+            setState(() {
+              _emailColor = Colors.white.withOpacity(.5);
+              _senhaColor = Colors.white.withOpacity(.5);
+              _emailerror = null;
+              _senhaerror = null;
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => HomePage(),
+                ),
+              );
+            });
+          });
+        } else {
+          setState(
+            () {
+              _senhaerror = "Senha errada";
+              _senhaColor = Colors.red;
+              _emailerror = null;
+              _emailColor = Colors.white.withOpacity(.5);
+            },
+          );
+        }
+      } else {
+        setState(
+          () {
+            _emailerror = "Email não encontrado";
+            _emailColor = Colors.red;
+            _senhaerror = null;
+            _senhaColor = Colors.white.withOpacity(.5);
+          },
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _emailColor = Colors.red;
+        _emailerror = "Sem conexão";
+        _senhaerror = null;
+        _senhaColor = Colors.red;
+      });
+    }
   }
 }
